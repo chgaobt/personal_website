@@ -1,136 +1,530 @@
-<!DOCTYPE HTML>
-<!--
-	Directive by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html>
-	<head>
-		<title>Directive by HTML5 UP</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-	</head>
-	<body class="is-preload">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chloe Gao</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF8;
+  --surface:#FFFFFF;
+  --surface2:#F4F3EF;
+  --border:#E8E6E0;
+  --border2:#D4D1CA;
+  --text:#1A1916;
+  --text2:#6B6860;
+  --text3:#A8A69F;
+  --accent:#1A1916;
+  --accent-warm:#C4773B;
+  --green:#2D6A4F;
+  --radius:10px;
+  --radius-lg:16px;
+  --radius-xl:24px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.6;
+  min-height:100vh;
+}
 
-		<!-- Header -->
-			<div id="header">
-				<span class="logo icon fa-paper-plane"></span>
-				<h1>Chloe Gao</h1>
-				<p>A passionate software developer with a knack for creating innovative and efficient solutions.</p>
-			</div>
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 48px;
+  background:rgba(250,250,248,0.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid transparent;
+  transition:border-color 0.3s;
+}
+nav.scrolled{border-bottom-color:var(--border)}
+.nav-logo{
+  font-family:'Instrument Serif',serif;
+  font-size:18px;
+  color:var(--text);
+  text-decoration:none;
+  letter-spacing:-0.01em;
+}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{
+  font-size:13px;color:var(--text2);text-decoration:none;
+  letter-spacing:0.02em;transition:color 0.2s;
+}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{
+  background:var(--text);color:#fff!important;
+  padding:8px 18px;border-radius:99px;
+  font-size:13px!important;transition:opacity 0.2s!important;
+}
+.nav-cta:hover{opacity:0.8!important}
 
-		<!-- Main -->
-			<div id="main">
+/* HERO */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:120px 48px 80px;
+  max-width:1100px;margin:0 auto;
+  position:relative;
+}
+.hero-eyebrow{
+  font-size:12px;font-weight:500;color:var(--text3);
+  letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:28px;display:flex;align-items:center;gap:10px;
+}
+.hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--text3)}
+.hero-name{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(52px,8vw,96px);
+  font-weight:400;
+  line-height:1.02;
+  letter-spacing:-0.03em;
+  color:var(--text);
+  margin-bottom:24px;
+}
+.hero-name em{font-style:italic;color:var(--accent-warm)}
+.hero-desc{
+  font-size:18px;font-weight:300;color:var(--text2);
+  max-width:540px;line-height:1.7;margin-bottom:48px;
+}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--text);color:#fff;
+  padding:14px 28px;border-radius:99px;
+  font-size:14px;font-weight:500;text-decoration:none;
+  transition:opacity 0.2s,transform 0.2s;
+}
+.btn-primary:hover{opacity:0.85;transform:translateY(-1px)}
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;color:var(--text);
+  padding:14px 28px;border-radius:99px;
+  font-size:14px;font-weight:400;text-decoration:none;
+  border:1px solid var(--border2);
+  transition:background 0.2s,border-color 0.2s;
+}
+.btn-secondary:hover{background:var(--surface2);border-color:var(--border)}
+.hero-scroll{
+  position:absolute;bottom:40px;left:48px;
+  font-size:11px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.hero-scroll::after{content:'↓';animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 
-				<header class="major container medium">
-					<h2>"Understand well as I may,  
-					<br />
-					my comprehension can only be an infinitesimal fraction
-					<br />
-					of all I want to understand." 
-					<br />
-					- Ada Lovelace</h2>
-					<!--
-					<p>Tellus erat mauris ipsum fermentum<br />
-					etiam vivamus nunc nibh morbi.</p>
-					-->
-				</header>
+/* QUOTE STRIP */
+.quote-strip{
+  background:var(--text);color:#fff;
+  padding:28px 48px;
+  overflow:hidden;
+}
+.quote-inner{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(14px,2vw,18px);
+  font-style:italic;
+  color:rgba(255,255,255,0.7);
+  max-width:800px;margin:0 auto;
+  text-align:center;
+  line-height:1.7;
+}
+.quote-inner cite{
+  display:block;margin-top:8px;
+  font-style:normal;font-size:12px;
+  color:rgba(255,255,255,0.4);
+  letter-spacing:0.1em;text-transform:uppercase;
+  font-family:'DM Sans',sans-serif;
+}
 
-				<div class="box alt container">
-					<section class="feature left">
-						<a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" class="image icon solid fa-signal"><img src="images/pic01.jpg" alt="" /></a>
-						<div class="content">
-							<h3>The Journey</h3>
-							<p> Dive into the details of my professional journey to see how my skills and accomplishments align with your needs and vision.</p>
-							<a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing">
-								<button style="font-size: 25px; background-color:cadetblue; color: white; border-radius: 10px; border-color: white;">Resume</button>
-							</a>
-						</div>
-					</section>
-					<section class="feature right">
-						<a href="https://github.com/chgaobt" class="image icon solid fa-code"><img src="images/pic02.jpg" alt="" /></a>
-						<div class="content">
-							<h3>The Projects</h3>
-							<p>Real life implementation of computer science theories to solve real life problems.</p>
-							<a href="https://github.com/chgaobt">
-								<button style="font-size: 25px; background-color:cadetblue; color: white; border-radius: 10px; border-color: white;">Github</button>
-							</a>
-						</div>
-					</section>
-					<section class="feature left">
-						<a href="https://www.linkedin.com/in/chloe-gao-84550a247/" class="image icon solid fa-mobile-alt"><img src="images/pic03.jpg" alt="" /></a>
-						<div class="content">
-							<h3>The Connection</h3>
-							<p>Solving any problem today requires a team and effective collaboration.</p>
-							<a href="https://www.linkedin.com/in/chloe-gao-84550a247/">
-								<button style="font-size: 25px; background-color:cadetblue; color: white; border-radius: 10px; border-color: white;">LinkedIn</button>
-							</a>
-						</div>
-					</section>
-				</div>
+/* SECTION BASE */
+section{padding:100px 48px;max-width:1100px;margin:0 auto}
+.section-label{
+  font-size:11px;font-weight:500;color:var(--text3);
+  letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+}
+.section-label::before{content:'';width:20px;height:1px;background:var(--text3)}
+.section-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(32px,4vw,48px);
+  font-weight:400;letter-spacing:-0.02em;
+  line-height:1.1;margin-bottom:48px;
+  color:var(--text);
+}
 
-				<!-- <footer class="major container medium">
-					<h3>Get shady with science</h3>
-					<p>Vitae natoque dictum etiam semper magnis enim feugiat amet curabitur tempor orci penatibus. Tellus erat mauris ipsum fermentum etiam vivamus.</p>
-					<ul class="actions special">
-						<li><a href="#" class="button">Join our crew</a></li>
-					</ul>
-				</footer> -->
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.about-text p{font-size:16px;color:var(--text2);line-height:1.8;margin-bottom:16px}
+.about-text p:last-child{margin-bottom:0}
+.about-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stat-box{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px;
+}
+.stat-box-num{
+  font-family:'Instrument Serif',serif;
+  font-size:36px;letter-spacing:-0.02em;color:var(--text);
+}
+.stat-box-label{font-size:12px;color:var(--text3);margin-top:4px}
+.skills-list{margin-top:24px;display:flex;flex-wrap:wrap;gap:6px}
+.skill-tag{
+  font-size:12px;padding:5px 12px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:99px;color:var(--text2);
+  transition:border-color 0.2s,color 0.2s;
+}
+.skill-tag:hover{border-color:var(--border2);color:var(--text)}
 
-			</div>
+/* PROJECTS */
+.projects-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.project-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:32px;
+  text-decoration:none;color:inherit;
+  transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;
+  display:block;position:relative;overflow:hidden;
+}
+.project-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(196,119,59,0.04),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.project-card:hover{
+  border-color:var(--border2);
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.06);
+}
+.project-card:hover::before{opacity:1}
+.project-card.featured{
+  grid-column:span 2;
+  display:grid;grid-template-columns:1fr auto;align-items:start;gap:32px;
+}
+.project-tag{
+  font-size:10px;font-weight:500;color:var(--accent-warm);
+  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;
+}
+.project-title{
+  font-family:'Instrument Serif',serif;
+  font-size:22px;letter-spacing:-0.01em;
+  color:var(--text);margin-bottom:10px;
+}
+.project-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px}
+.project-tech{display:flex;gap:6px;flex-wrap:wrap}
+.tech-chip{
+  font-size:11px;padding:3px 10px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:99px;color:var(--text3);
+}
+.project-arrow{
+  font-size:20px;color:var(--text3);align-self:flex-start;
+  transition:transform 0.2s,color 0.2s;
+}
+.project-card:hover .project-arrow{transform:translate(2px,-2px);color:var(--text)}
 
-		<!-- Footer -->
-			<!-- <div id="footer">
-				<div class="container medium">
+/* EXPERIENCE */
+.exp-list{display:flex;flex-direction:column;gap:0}
+.exp-item{
+  display:grid;grid-template-columns:180px 1fr;gap:32px;
+  padding:32px 0;border-bottom:1px solid var(--border);
+}
+.exp-item:first-child{border-top:1px solid var(--border)}
+.exp-period{font-size:12px;color:var(--text3);padding-top:3px;letter-spacing:0.02em}
+.exp-role{font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px}
+.exp-company{font-size:14px;color:var(--accent-warm);margin-bottom:10px}
+.exp-desc{font-size:14px;color:var(--text2);line-height:1.7}
 
-					<header class="major last">
-						<h2>Questions or comments?</h2>
-					</header>
+/* CONNECT */
+.connect-section{
+  padding:100px 48px;
+  background:var(--text);
+  color:#fff;
+}
+.connect-inner{max-width:1100px;margin:0 auto}
+.connect-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(40px,6vw,72px);
+  font-weight:400;letter-spacing:-0.03em;
+  line-height:1.05;margin-bottom:32px;
+}
+.connect-title em{font-style:italic;color:rgba(255,255,255,0.5)}
+.connect-links{display:flex;gap:12px;flex-wrap:wrap}
+.connect-link{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 24px;border-radius:99px;
+  font-size:14px;text-decoration:none;
+  transition:all 0.2s;border:1px solid rgba(255,255,255,0.15);
+  color:#fff;
+}
+.connect-link:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.3)}
+.connect-link.primary{background:#fff;color:var(--text)!important;border-color:#fff}
+.connect-link.primary:hover{opacity:0.9;background:#fff}
 
-					<p>Vitae natoque dictum etiam semper magnis enim feugiat amet curabitur tempor
-					orci penatibus. Tellus erat mauris ipsum fermentum etiam vivamus.</p>
+/* FOOTER */
+footer{
+  padding:24px 48px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--border);
+  font-size:12px;color:var(--text3);
+}
 
-					<form method="post" action="#">
-						<div class="row">
-							<div class="col-6 col-12-mobilep">
-								<input type="text" name="name" placeholder="Name" />
-							</div>
-							<div class="col-6 col-12-mobilep">
-								<input type="email" name="email" placeholder="Email" />
-							</div>
-							<div class="col-12">
-								<textarea name="message" placeholder="Message" rows="6"></textarea>
-							</div>
-							<div class="col-12">
-								<ul class="actions special">
-									<li><input type="submit" value="Send Message" /></li>
-								</ul>
-							</div>
-						</div>
-					</form>
+/* FADE IN */
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
 
-					<ul class="icons">
-						<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-						<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-						<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-						<li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
-						<li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
-					</ul>
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:16px 24px}
+  .hero,.section-base{padding-left:24px;padding-right:24px}
+  section{padding:64px 24px}
+  .hero-name{font-size:48px}
+  .about-grid,.projects-grid{grid-template-columns:1fr}
+  .project-card.featured{grid-column:span 1;grid-template-columns:1fr}
+  .exp-item{grid-template-columns:1fr;gap:4px}
+  .connect-section{padding:64px 24px}
+  footer{padding:20px 24px;flex-direction:column;gap:8px;text-align:center}
+  .quote-strip{padding:24px}
+}
+</style>
+</head>
+<body>
 
-					<ul class="copyright">
-						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-					</ul>
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">Chloe Gao</a>
+  <div class="nav-links">
+    <a href="#about">About</a>
+    <a href="#projects">Projects</a>
+    <a href="#experience">Experience</a>
+    <a href="https://www.linkedin.com/in/chloe-gao-84550a247/" target="_blank" class="nav-cta">Connect →</a>
+  </div>
+</nav>
 
-				</div>
-			</div> -->
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Software Developer</div>
+  <h1 class="hero-name">
+    Chloe<br>
+    <em>Gao</em>
+  </h1>
+  <p class="hero-desc">
+    I build software that's thoughtful, efficient, and built to last — 
+    turning complex problems into elegant solutions.
+  </p>
+  <div class="hero-actions">
+    <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="btn-primary">View resume ↗</a>
+    <a href="https://github.com/chgaobt" target="_blank" class="btn-secondary">GitHub</a>
+    <a href="#projects" class="btn-secondary">See my work</a>
+  </div>
+  <div class="hero-scroll">Scroll</div>
+</div>
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+<!-- QUOTE -->
+<div class="quote-strip">
+  <div class="quote-inner">
+    "Understand well as I may, my comprehension can only be an infinitesimal fraction of all I want to understand."
+    <cite>— Ada Lovelace</cite>
+  </div>
+</div>
 
-	</body>
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-label">About</div>
+  <h2 class="section-title">Builder. Thinker.<br>Problem solver.</h2>
+  <div class="about-grid fade-in">
+    <div class="about-text">
+      <p>
+        I'm a software developer with a deep curiosity for how systems work and a drive to make them work better. 
+        I gravitate toward work that sits at the intersection of technical rigor and real-world impact.
+      </p>
+      <p>
+        Whether it's architecting a backend system, designing a user-facing interface, or debugging something 
+        that seemed impossible — I bring the same level of care to every layer of the stack.
+      </p>
+      <p>
+        Outside of code, I'm drawn to ideas that push the boundaries of what's possible — much like 
+        the mathematician whose words I keep close.
+      </p>
+      <div class="skills-list">
+        <span class="skill-tag">Python</span>
+        <span class="skill-tag">JavaScript</span>
+        <span class="skill-tag">React</span>
+        <span class="skill-tag">Node.js</span>
+        <span class="skill-tag">SQL</span>
+        <span class="skill-tag">Java</span>
+        <span class="skill-tag">Git</span>
+        <span class="skill-tag">REST APIs</span>
+        <span class="skill-tag">Linux</span>
+      </div>
+    </div>
+    <div>
+      <div class="about-stats">
+        <div class="stat-box">
+          <div class="stat-box-num">∞</div>
+          <div class="stat-box-label">Problems worth solving</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num">CS</div>
+          <div class="stat-box-label">Computer Science focused</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num">01</div>
+          <div class="stat-box-label">Always learning</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num">↗</div>
+          <div class="stat-box-label">Building toward more</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects" style="padding-top:0">
+  <div class="section-label">Work</div>
+  <h2 class="section-title">Selected projects</h2>
+  <div class="projects-grid fade-in">
+
+    <a href="https://github.com/chgaobt" target="_blank" class="project-card featured">
+      <div>
+        <div class="project-tag">Featured</div>
+        <div class="project-title">Computer Science in Practice</div>
+        <p class="project-desc">
+          A collection of projects applying CS theory to real-world problems — 
+          from data structures and algorithms to full-stack applications. 
+          Each project is built with a focus on clean architecture and practical utility.
+        </p>
+        <div class="project-tech">
+          <span class="tech-chip">Python</span>
+          <span class="tech-chip">JavaScript</span>
+          <span class="tech-chip">React</span>
+          <span class="tech-chip">SQL</span>
+        </div>
+      </div>
+      <div class="project-arrow">↗</div>
+    </a>
+
+    <a href="https://github.com/chgaobt" target="_blank" class="project-card">
+      <div class="project-tag">Open source</div>
+      <div class="project-title">Algorithm Library</div>
+      <p class="project-desc">Efficient implementations of classic algorithms with clear documentation and test coverage.</p>
+      <div class="project-tech">
+        <span class="tech-chip">Python</span>
+        <span class="tech-chip">Java</span>
+      </div>
+      <br>
+      <div class="project-arrow" style="margin-top:12px">↗</div>
+    </a>
+
+    <a href="https://github.com/chgaobt" target="_blank" class="project-card">
+      <div class="project-tag">Web</div>
+      <div class="project-title">Full-Stack Apps</div>
+      <p class="project-desc">End-to-end web applications with modern frontend frameworks and robust backend APIs.</p>
+      <div class="project-tech">
+        <span class="tech-chip">React</span>
+        <span class="tech-chip">Node.js</span>
+        <span class="tech-chip">REST</span>
+      </div>
+      <br>
+      <div class="project-arrow" style="margin-top:12px">↗</div>
+    </a>
+
+  </div>
+  <div style="margin-top:16px;text-align:center">
+    <a href="https://github.com/chgaobt" target="_blank" class="btn-secondary" style="display:inline-flex">
+      View all on GitHub ↗
+    </a>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience" style="padding-top:0">
+  <div class="section-label">Experience</div>
+  <h2 class="section-title">The journey so far</h2>
+  <div class="exp-list fade-in">
+    <div class="exp-item">
+      <div class="exp-period">Present</div>
+      <div>
+        <div class="exp-role">Software Developer</div>
+        <div class="exp-company">Building · Learning · Growing</div>
+        <div class="exp-desc">
+          Actively developing projects at the intersection of computer science theory and practical application. 
+          Focused on writing clean, maintainable code that solves real problems.
+        </div>
+      </div>
+    </div>
+    <div class="exp-item">
+      <div class="exp-period">Education</div>
+      <div>
+        <div class="exp-role">Computer Science</div>
+        <div class="exp-company">Academic Foundation</div>
+        <div class="exp-desc">
+          Grounded in the fundamentals — algorithms, data structures, systems design, and software engineering. 
+          Translating theory into practice through hands-on projects.
+        </div>
+      </div>
+    </div>
+    <div class="exp-item">
+      <div class="exp-period">Always</div>
+      <div>
+        <div class="exp-role">Curious Thinker</div>
+        <div class="exp-company">The Ada Lovelace School of Thought</div>
+        <div class="exp-desc">
+          Driven by the belief that understanding is never complete — there's always more to learn, 
+          more to build, more problems worth solving with elegance and intention.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px">
+    <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="btn-secondary" style="display:inline-flex">
+      Full resume ↗
+    </a>
+  </div>
+</section>
+
+<!-- CONNECT -->
+<div class="connect-section">
+  <div class="connect-inner">
+    <h2 class="connect-title">
+      Let's build<br>
+      <em>something together</em>
+    </h2>
+    <p style="font-size:16px;color:rgba(255,255,255,0.5);margin-bottom:32px;max-width:480px;font-weight:300;line-height:1.7">
+      Whether you have a project in mind, a role to fill, or just want to connect — I'm always open to a conversation.
+    </p>
+    <div class="connect-links">
+      <a href="https://www.linkedin.com/in/chloe-gao-84550a247/" target="_blank" class="connect-link primary">LinkedIn ↗</a>
+      <a href="https://github.com/chgaobt" target="_blank" class="connect-link">GitHub</a>
+      <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="connect-link">Resume</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2026 Chloe Gao</span>
+  <span>chloegao.dev</span>
+</footer>
+
+<script>
+// Scroll nav border
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40);
+});
+
+// Fade in on scroll
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
+},{threshold:0.1});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+</script>
+</body>
 </html>
