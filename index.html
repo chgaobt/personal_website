@@ -91,7 +91,7 @@ nav.scrolled{border-bottom-color:var(--border)}
 .hero-name em{font-style:italic;color:var(--accent-warm)}
 .hero-desc{
   font-size:18px;font-weight:300;color:var(--text2);
-  max-width:540px;line-height:1.7;margin-bottom:48px;
+  max-width:560px;line-height:1.7;margin-bottom:48px;
 }
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .btn-primary{
@@ -234,10 +234,38 @@ section{padding:100px 48px;max-width:1100px;margin:0 auto}
   padding:32px 0;border-bottom:1px solid var(--border);
 }
 .exp-item:first-child{border-top:1px solid var(--border)}
-.exp-period{font-size:12px;color:var(--text3);padding-top:3px;letter-spacing:0.02em}
+.exp-period{font-size:12px;color:var(--text3);padding-top:3px;letter-spacing:0.02em;line-height:1.6}
 .exp-role{font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px}
 .exp-company{font-size:14px;color:var(--accent-warm);margin-bottom:10px}
 .exp-desc{font-size:14px;color:var(--text2);line-height:1.7}
+.exp-bullets{
+  font-size:14px;color:var(--text2);line-height:1.7;
+  padding-left:0;list-style:none;
+}
+.exp-bullets li{
+  padding:3px 0 3px 16px;
+  position:relative;
+}
+.exp-bullets li::before{
+  content:'—';position:absolute;left:0;
+  color:var(--text3);font-size:11px;top:5px;
+}
+
+/* EDUCATION */
+.edu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:48px}
+.edu-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:28px;
+}
+.edu-school{font-family:'Instrument Serif',serif;font-size:20px;color:var(--text);margin-bottom:6px}
+.edu-degree{font-size:14px;color:var(--accent-warm);margin-bottom:8px;line-height:1.5}
+.edu-meta{font-size:12px;color:var(--text3);line-height:1.6}
+.edu-badge{
+  display:inline-block;margin-top:10px;
+  font-size:11px;padding:4px 10px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:99px;color:var(--text3);
+}
 
 /* CONNECT */
 .connect-section{
@@ -283,7 +311,7 @@ footer{
   .hero,.section-base{padding-left:24px;padding-right:24px}
   section{padding:64px 24px}
   .hero-name{font-size:48px}
-  .about-grid,.projects-grid{grid-template-columns:1fr}
+  .about-grid,.projects-grid,.edu-grid{grid-template-columns:1fr}
   .project-card.featured{grid-column:span 1;grid-template-columns:1fr}
   .exp-item{grid-template-columns:1fr;gap:4px}
   .connect-section{padding:64px 24px}
@@ -299,22 +327,22 @@ footer{
   <a href="#" class="nav-logo">Chloe Gao</a>
   <div class="nav-links">
     <a href="#about">About</a>
-    <a href="#projects">Projects</a>
     <a href="#experience">Experience</a>
+    <a href="#projects">Projects</a>
     <a href="https://www.linkedin.com/in/chloe-gao-84550a247/" target="_blank" class="nav-cta">Connect →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow">Software Developer</div>
+  <div class="hero-eyebrow">Computer Engineering · Mathematics · Machine Learning</div>
   <h1 class="hero-name">
     Chloe<br>
     <em>Gao</em>
   </h1>
   <p class="hero-desc">
-    I build software that's thoughtful, efficient, and built to last — 
-    turning complex problems into elegant solutions.
+    Dual-degree student at UVA studying Computer Engineering and Mathematics — 
+    building at the intersection of ML research, systems engineering, and real-world impact.
   </p>
   <div class="hero-actions">
     <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="btn-primary">View resume ↗</a>
@@ -335,53 +363,142 @@ footer{
 <!-- ABOUT -->
 <section id="about">
   <div class="section-label">About</div>
-  <h2 class="section-title">Builder. Thinker.<br>Problem solver.</h2>
+  <h2 class="section-title">Builder. Researcher.<br>Problem solver.</h2>
   <div class="about-grid fade-in">
     <div class="about-text">
       <p>
-        I'm a software developer with a deep curiosity for how systems work and a drive to make them work better. 
-        I gravitate toward work that sits at the intersection of technical rigor and real-world impact.
+        I'm a Computer Engineering and Mathematics student at the University of Virginia (GPA 3.76, Dean's List),
+        with a minor in Philosophy and a year abroad at the University of Hong Kong. 
+        I'm drawn to work that sits at the intersection of technical rigor and real-world impact.
       </p>
       <p>
-        Whether it's architecting a backend system, designing a user-facing interface, or debugging something 
-        that seemed impossible — I bring the same level of care to every layer of the stack.
+        I've done ML research predicting material band gap properties using neural networks, 
+        built satellite testing infrastructure at ST Engineering iDirect, and shipped a 
+        first-place laser weed-removal system in an international engineering competition.
       </p>
       <p>
-        Outside of code, I'm drawn to ideas that push the boundaries of what's possible — much like 
-        the mathematician whose words I keep close.
+        Incoming Software Engineering Intern at Appian this summer — always looking for the next 
+        hard problem worth solving with elegance and intention.
       </p>
       <div class="skills-list">
         <span class="skill-tag">Python</span>
-        <span class="skill-tag">JavaScript</span>
-        <span class="skill-tag">React</span>
-        <span class="skill-tag">Node.js</span>
-        <span class="skill-tag">SQL</span>
         <span class="skill-tag">Java</span>
-        <span class="skill-tag">Git</span>
-        <span class="skill-tag">REST APIs</span>
+        <span class="skill-tag">C</span>
+        <span class="skill-tag">PyTorch</span>
+        <span class="skill-tag">Scikit-Learn</span>
+        <span class="skill-tag">Flutter</span>
+        <span class="skill-tag">Dart</span>
         <span class="skill-tag">Linux</span>
+        <span class="skill-tag">Git</span>
+        <span class="skill-tag">Google Colab</span>
+        <span class="skill-tag">JIRA</span>
       </div>
     </div>
     <div>
       <div class="about-stats">
         <div class="stat-box">
-          <div class="stat-box-num">∞</div>
-          <div class="stat-box-label">Problems worth solving</div>
+          <div class="stat-box-num">3.76</div>
+          <div class="stat-box-label">GPA · Dean's List</div>
         </div>
         <div class="stat-box">
-          <div class="stat-box-num">CS</div>
-          <div class="stat-box-label">Computer Science focused</div>
+          <div class="stat-box-num">2×</div>
+          <div class="stat-box-label">Dual degree — CE + Math</div>
         </div>
         <div class="stat-box">
-          <div class="stat-box-num">01</div>
-          <div class="stat-box-label">Always learning</div>
+          <div class="stat-box-num">850+</div>
+          <div class="stat-box-label">Data points curated for ML research</div>
         </div>
         <div class="stat-box">
-          <div class="stat-box-num">↗</div>
-          <div class="stat-box-label">Building toward more</div>
+          <div class="stat-box-num">1st</div>
+          <div class="stat-box-label">HK Engineering Pitching Competition</div>
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience" style="padding-top:0">
+  <div class="section-label">Experience</div>
+  <h2 class="section-title">The journey so far</h2>
+  <div class="exp-list fade-in">
+
+    <div class="exp-item">
+      <div class="exp-period">Jun 2026 – Aug 2026<br><span style="color:var(--accent-warm);font-size:11px;font-weight:500;letter-spacing:0.05em">UPCOMING</span></div>
+      <div>
+        <div class="exp-role">Software Engineering Intern</div>
+        <div class="exp-company">Appian</div>
+        <div class="exp-desc">Incoming SWE intern for Summer 2026.</div>
+      </div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-period">Jan 2025 – Aug 2025</div>
+      <div>
+        <div class="exp-role">Machine Learning Undergraduate Researcher</div>
+        <div class="exp-company">University of Virginia · Dean's Fellow</div>
+        <ul class="exp-bullets">
+          <li>Designed and trained a multilayer perceptron (MLP) neural network to predict band gap properties for new materials given formula and structural information, using PyTorch and Scikit-Learn.</li>
+          <li>Achieved a Mean Squared Error of 0.12 and R² of 0.907 via the Lion optimizer, cross-validation, and Bayesian hyperparameter optimization.</li>
+          <li>Built a curated database of 850+ data points sourced from academic literature on experimentally measured bandgap properties of semiconducting materials at room temperature.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-period">May 2024 – Aug 2024</div>
+      <div>
+        <div class="exp-role">Engineering Intern</div>
+        <div class="exp-company">ST Engineering iDirect</div>
+        <ul class="exp-bullets">
+          <li>Implemented ThreadSanitizer (TSAN) across 30+ C repositories, identifying 2 data races and improving code quality and concurrency safety.</li>
+          <li>Designed a PyTest suite for break-before-make satellite beam switching as part of a blackbox testing initiative.</li>
+          <li>Participated in all phases of the SDLC using Agile/Scrum methodologies, presenting progress daily to a team of 9.</li>
+          <li>Developed end-to-end knowledge of satellite communication ground and over-the-air systems.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-period">Sep 2023 – Present</div>
+      <div>
+        <div class="exp-role">Electrical Team Engineer</div>
+        <div class="exp-company">Virginia Motorsports Formula Student Team</div>
+        <ul class="exp-bullets">
+          <li>Led redesign of the Brake System Plausibility Device (BSPD), enhancing reliability and compliance within the electric vehicle's emergency shutdown system for the Formula SAE competition.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- EDUCATION inline here -->
+  <div style="margin-top:64px">
+    <div class="section-label">Education</div>
+    <h2 class="section-title" style="margin-bottom:24px">Academic foundation</h2>
+    <div class="edu-grid">
+      <div class="edu-card">
+        <div class="edu-school">University of Virginia</div>
+        <div class="edu-degree">B.S. Computer Engineering, School of Engineering &amp; Applied Science<br>B.S. Mathematics, College of Arts &amp; Sciences<br>Minor in Philosophy</div>
+        <div class="edu-meta">Charlottesville, VA · Expected May 2027<br>GPA: 3.76 / 4.00</div>
+        <span class="edu-badge">Engineering Dean's List</span>
+        <span class="edu-badge" style="margin-left:6px">Dean's Fellow (ML Research)</span>
+      </div>
+      <div class="edu-card">
+        <div class="edu-school">University of Hong Kong</div>
+        <div class="edu-degree">Study Abroad</div>
+        <div class="edu-meta">Hong Kong · Aug 2024 – May 2025</div>
+        <div style="margin-top:16px;font-size:13px;color:var(--text2);line-height:1.6">
+          Relevant coursework: Applied Deep Learning, Data Structures &amp; Algorithms, Computer Systems &amp; Organization, Ordinary Differential Equations, Discrete Mathematics, Probability, Basic Real Analysis, Intro to Stochastic Processes
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:8px">
+    <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="btn-secondary" style="display:inline-flex">
+      Full resume ↗
+    </a>
   </div>
 </section>
 
@@ -391,101 +508,69 @@ footer{
   <h2 class="section-title">Selected projects</h2>
   <div class="projects-grid fade-in">
 
-    <a href="https://github.com/chgaobt" target="_blank" class="project-card featured">
+    <!-- Featured -->
+    <div class="project-card featured">
       <div>
-        <div class="project-tag">Featured</div>
-        <div class="project-title">Computer Science in Practice</div>
+        <div class="project-tag">Featured · 1st Place — HK Academy of Engineering</div>
+        <div class="project-title">Laser-Based Weed Removal System</div>
         <p class="project-desc">
-          A collection of projects applying CS theory to real-world problems — 
-          from data structures and algorithms to full-stack applications. 
-          Each project is built with a focus on clean architecture and practical utility.
+          Designed and built an autonomous weed removal system under the theme "Smart and Sustainable Engineering." 
+          Used YOLOv8 for real-time object detection to identify weeds, then drove an Arduino-controlled 
+          servo motor system to target and eliminate them with a laser — calibrated for precise coordinate mapping 
+          from camera frame to physical space. Presented to a panel of industry experts alongside a multicultural 
+          team of 4 from Thailand and Hong Kong.
         </p>
         <div class="project-tech">
+          <span class="tech-chip">YOLOv8</span>
+          <span class="tech-chip">Arduino</span>
+          <span class="tech-chip">Servo Motors</span>
+          <span class="tech-chip">Computer Vision</span>
           <span class="tech-chip">Python</span>
-          <span class="tech-chip">JavaScript</span>
-          <span class="tech-chip">React</span>
-          <span class="tech-chip">SQL</span>
         </div>
       </div>
       <div class="project-arrow">↗</div>
-    </a>
+    </div>
 
     <a href="https://github.com/chgaobt" target="_blank" class="project-card">
-      <div class="project-tag">Open source</div>
-      <div class="project-title">Algorithm Library</div>
-      <p class="project-desc">Efficient implementations of classic algorithms with clear documentation and test coverage.</p>
+      <div class="project-tag">ML Research</div>
+      <div class="project-title">Gradient Descent vs. Diffusion in Neural Networks</div>
+      <p class="project-desc">Comparative experiments evaluating training dynamics of gradient descent and diffusion-based methods across MLPs and 1D CNNs on a synthetic S-shaped dataset. Investigated model depth, layer width, and activation functions systematically.</p>
       <div class="project-tech">
+        <span class="tech-chip">PyTorch</span>
+        <span class="tech-chip">Jupyter</span>
         <span class="tech-chip">Python</span>
-        <span class="tech-chip">Java</span>
       </div>
-      <br>
-      <div class="project-arrow" style="margin-top:12px">↗</div>
+      <div class="project-arrow" style="margin-top:16px">↗</div>
     </a>
 
     <a href="https://github.com/chgaobt" target="_blank" class="project-card">
-      <div class="project-tag">Web</div>
-      <div class="project-title">Full-Stack Apps</div>
-      <p class="project-desc">End-to-end web applications with modern frontend frameworks and robust backend APIs.</p>
+      <div class="project-tag">Mobile · Computer Vision</div>
+      <div class="project-title">ML Parasite Egg Detection App</div>
+      <p class="project-desc">Led all software initiatives for a mobile app that detects parasite eggs using a Roboflow object detection model. Built a RESTful API with Python Flask, communicated directly with the client to gather requirements, and delivered the final product demo.</p>
       <div class="project-tech">
-        <span class="tech-chip">React</span>
-        <span class="tech-chip">Node.js</span>
-        <span class="tech-chip">REST</span>
+        <span class="tech-chip">Python Flask</span>
+        <span class="tech-chip">Roboflow</span>
+        <span class="tech-chip">REST API</span>
       </div>
-      <br>
-      <div class="project-arrow" style="margin-top:12px">↗</div>
+      <div class="project-arrow" style="margin-top:16px">↗</div>
+    </a>
+
+    <a href="https://github.com/chgaobt" target="_blank" class="project-card">
+      <div class="project-tag">Hackathon · Mobile</div>
+      <div class="project-title">Foreign Language OCR Translator</div>
+      <p class="project-desc">Built at the UVA Women in CS Hackathon — a mobile app that lets users upload photos from their camera roll, detects foreign language text via OCR, and translates it to English in real time.</p>
+      <div class="project-tech">
+        <span class="tech-chip">Flutter</span>
+        <span class="tech-chip">Dart</span>
+        <span class="tech-chip">OCR</span>
+      </div>
+      <div class="project-arrow" style="margin-top:16px">↗</div>
     </a>
 
   </div>
   <div style="margin-top:16px;text-align:center">
     <a href="https://github.com/chgaobt" target="_blank" class="btn-secondary" style="display:inline-flex">
       View all on GitHub ↗
-    </a>
-  </div>
-</section>
-
-<!-- EXPERIENCE -->
-<section id="experience" style="padding-top:0">
-  <div class="section-label">Experience</div>
-  <h2 class="section-title">The journey so far</h2>
-  <div class="exp-list fade-in">
-    <div class="exp-item">
-      <div class="exp-period">Present</div>
-      <div>
-        <div class="exp-role">Software Developer</div>
-        <div class="exp-company">Building · Learning · Growing</div>
-        <div class="exp-desc">
-          Actively developing projects at the intersection of computer science theory and practical application. 
-          Focused on writing clean, maintainable code that solves real problems.
-        </div>
-      </div>
-    </div>
-    <div class="exp-item">
-      <div class="exp-period">Education</div>
-      <div>
-        <div class="exp-role">Computer Science</div>
-        <div class="exp-company">Academic Foundation</div>
-        <div class="exp-desc">
-          Grounded in the fundamentals — algorithms, data structures, systems design, and software engineering. 
-          Translating theory into practice through hands-on projects.
-        </div>
-      </div>
-    </div>
-    <div class="exp-item">
-      <div class="exp-period">Always</div>
-      <div>
-        <div class="exp-role">Curious Thinker</div>
-        <div class="exp-company">The Ada Lovelace School of Thought</div>
-        <div class="exp-desc">
-          Driven by the belief that understanding is never complete — there's always more to learn, 
-          more to build, more problems worth solving with elegance and intention.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-top:24px">
-    <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="btn-secondary" style="display:inline-flex">
-      Full resume ↗
     </a>
   </div>
 </section>
@@ -503,6 +588,7 @@ footer{
     <div class="connect-links">
       <a href="https://www.linkedin.com/in/chloe-gao-84550a247/" target="_blank" class="connect-link primary">LinkedIn ↗</a>
       <a href="https://github.com/chgaobt" target="_blank" class="connect-link">GitHub</a>
+      <a href="mailto:chloegao@virginia.edu" class="connect-link">Email</a>
       <a href="https://drive.google.com/file/d/17j7zn8I_ZV57REjLqfAUTAvjJMhZjBzI/view?usp=sharing" target="_blank" class="connect-link">Resume</a>
     </div>
   </div>
