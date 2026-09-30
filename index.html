@@ -384,7 +384,11 @@ footer{
         <span class="skill-tag">Python</span>
         <span class="skill-tag">Java</span>
         <span class="skill-tag">C</span>
+        <span class="skill-tag">C++</span>
         <span class="skill-tag">PyTorch</span>
+        <span class="skill-tag">FreeRTOS</span>
+        <span class="skill-tag">Embedded / SPI &amp; CAN</span>
+        <span class="skill-tag">Vitis AI</span>
         <span class="skill-tag">Scikit-Learn</span>
         <span class="skill-tag">Flutter</span>
         <span class="skill-tag">Dart</span>
@@ -465,6 +469,8 @@ footer{
         <div class="exp-role">Electrical Team Engineer</div>
         <div class="exp-company">Virginia Motorsports Formula Student Team</div>
         <ul class="exp-bullets">
+          <li>Lead the battery management system firmware for the tractive battery — FreeRTOS task architecture, the ADBMS6830/6822 cell-monitor driver over isoSPI, data acquisition, fault handling, charging handshake and CAN, on a Teensy 4.1. <a href="projects/bms.html" style="color:var(--accent-warm);text-decoration:none">Read the case study →</a></li>
+          <li>Built the safety path that monitors 144 cells and 48 thermistors against the Formula SAE fault conditions and latches the shutdown circuit open, with PEC-validated measurements across a galvanic isolation boundary.</li>
           <li>Led redesign of the Brake System Plausibility Device (BSPD), enhancing reliability and compliance within the electric vehicle's emergency shutdown system for the Formula SAE competition.</li>
         </ul>
       </div>
@@ -481,7 +487,10 @@ footer{
         <div class="edu-school">University of Virginia</div>
         <div class="edu-degree">B.S. Computer Engineering, School of Engineering &amp; Applied Science<br>B.S. Mathematics, College of Arts &amp; Sciences<br>Minor in Philosophy</div>
         <div class="edu-meta">Charlottesville, VA · Expected May 2027<br>GPA: 3.76 / 4.00</div>
-        <span class="edu-badge">Engineering Dean's List</span>
+        <div style="margin-top:14px;font-size:13px;color:var(--text2);line-height:1.6">
+          Senior capstone: <a href="projects/reefwatch.html" style="color:var(--accent-warm);text-decoration:none">ReefWatch</a> — FPGA-accelerated coral health mapping, advised by Prof. Mircea Stan.
+        </div>
+        <span class="edu-badge" style="margin-top:14px">Engineering Dean's List</span>
         <span class="edu-badge" style="margin-left:6px">Dean's Fellow (ML Research)</span>
       </div>
       <div class="edu-card">
@@ -508,10 +517,61 @@ footer{
   <h2 class="section-title">Selected projects</h2>
   <div class="projects-grid fade-in">
 
-    <!-- Featured -->
-    <div class="project-card featured">
+    <!-- ReefWatch -->
+    <a href="projects/reefwatch.html" class="project-card featured">
       <div>
-        <div class="project-tag">Featured · 1st Place — HK Academy of Engineering</div>
+        <div class="project-tag">Capstone · Now running on hardware</div>
+        <div class="project-title">ReefWatch — FPGA-Accelerated Coral Health Mapping</div>
+        <p class="project-desc">
+          A semantic segmentation model deployed on an AMD Kria KV260 FPGA that labels every pixel of a
+          reef frame as live, bleached, degraded or other — cheap enough in power to belong on an
+          autonomous underwater vehicle. I own the deployment pipeline: quantizing the model to INT8,
+          compiling it to a DPU graph, and getting it running on the board. As of September 2026 it holds
+          12.99 FPS at 76.99 ms per frame, with under 1% latency spread across 200 frames. Verified against
+          an Unreal Engine digital twin of a real Indonesian reef.
+        </p>
+        <div style="font-size:13px;color:var(--accent-warm);margin-bottom:18px">Read the case study — system diagrams, results and model output →</div>
+        <div class="project-tech">
+          <span class="tech-chip">Vitis AI</span>
+          <span class="tech-chip">PyTorch</span>
+          <span class="tech-chip">Quantization</span>
+          <span class="tech-chip">Kria KV260</span>
+          <span class="tech-chip">VART</span>
+          <span class="tech-chip">Unreal Engine 5</span>
+        </div>
+      </div>
+      <div class="project-arrow">↗</div>
+    </a>
+
+    <!-- BMS -->
+    <a href="projects/bms.html" class="project-card featured">
+      <div>
+        <div class="project-tag">Embedded Systems · Formula Student</div>
+        <div class="project-title">Battery Management System</div>
+        <p class="project-desc">
+          Safety firmware for the tractive battery on Virginia Motorsports' Formula Student car. It watches
+          all 144 cells and 48 thermistors across a galvanic isolation boundary over isoSPI, checks the pack
+          against the competition's five fault conditions every 16 ms, and latches the shutdown circuit open
+          when anything reads out of bounds — with no path in firmware that clears it. I lead the BMS
+          firmware: the FreeRTOS task architecture, the cell-monitor driver, data acquisition, fault logic,
+          charging handshake and CAN.
+        </p>
+        <div style="font-size:13px;color:var(--accent-warm);margin-bottom:18px">Read the case study — sensing chain, task architecture and fault path →</div>
+        <div class="project-tech">
+          <span class="tech-chip">C++</span>
+          <span class="tech-chip">FreeRTOS</span>
+          <span class="tech-chip">Teensy 4.1</span>
+          <span class="tech-chip">isoSPI</span>
+          <span class="tech-chip">CAN bus</span>
+          <span class="tech-chip">PlatformIO</span>
+        </div>
+      </div>
+      <div class="project-arrow">↗</div>
+    </a>
+
+    <div class="project-card">
+      <div>
+        <div class="project-tag">1st Place — HK Academy of Engineering</div>
         <div class="project-title">Laser-Based Weed Removal System</div>
         <p class="project-desc">
           Designed and built an autonomous weed removal system under the theme "Smart and Sustainable Engineering." 
@@ -528,7 +588,7 @@ footer{
           <span class="tech-chip">Python</span>
         </div>
       </div>
-      <div class="project-arrow">↗</div>
+      <div class="project-arrow" style="margin-top:16px">↗</div>
     </div>
 
     <a href="https://github.com/chgaobt" target="_blank" class="project-card">

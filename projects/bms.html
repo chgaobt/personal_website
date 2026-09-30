@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battery Management System — Chloe Gao</title>
+<meta name="description" content="Firmware for the tractive-system battery management system on Virginia Motorsports' Formula Student car: 144 cells over isoSPI, FreeRTOS task architecture, and a latching fault path into the shutdown circuit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/project.css">
+</head>
+<body>
+
+<nav id="nav">
+  <a href="../index.html" class="nav-logo">Chloe Gao</a>
+  <div class="nav-links">
+    <a href="../index.html#about">About</a>
+    <a href="../index.html#experience">Experience</a>
+    <a href="../index.html#projects">Projects</a>
+    <a href="https://www.linkedin.com/in/chloe-gao-84550a247/" target="_blank" class="nav-cta">Connect →</a>
+  </div>
+</nav>
+
+<div class="proj-hero">
+  <div class="breadcrumb"><a href="../index.html">Home</a> &nbsp;/&nbsp; <a href="../index.html#projects">Projects</a> &nbsp;/&nbsp; Battery Management System</div>
+  <div class="proj-eyebrow">Embedded Systems · Formula Student</div>
+  <h1 class="proj-title">Battery<br><em>Management System</em></h1>
+  <p class="proj-lede">
+    Firmware that watches all 144 cells of a Formula Student tractive battery, decides in
+    milliseconds whether the pack is safe, and pulls the car's shutdown circuit open when it
+    isn't. Built on a Teensy 4.1 under FreeRTOS for Virginia Motorsports.
+  </p>
+
+  <div class="proj-meta">
+    <div class="meta-cell">
+      <div class="meta-label">Role</div>
+      <div class="meta-value">BMS firmware lead — architecture, driver, data acquisition, fault logic, charging, CAN</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Team</div>
+      <div class="meta-value">Virginia Motorsports<br>Electrical subteam</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Timeline</div>
+      <div class="meta-value">2025 – present<br>2026–27 vehicle</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Target</div>
+      <div class="meta-value">Teensy 4.1 · Cortex-M7 @ 600 MHz · FreeRTOS</div>
+    </div>
+  </div>
+
+  <div class="proj-tech">
+    <span class="tech-chip">C++</span>
+    <span class="tech-chip">FreeRTOS</span>
+    <span class="tech-chip">PlatformIO</span>
+    <span class="tech-chip">isoSPI</span>
+    <span class="tech-chip">CAN bus</span>
+    <span class="tech-chip">ADBMS6830 / 6822</span>
+    <span class="tech-chip">FlexCAN_T4</span>
+  </div>
+</div>
+
+<div class="proj-body">
+
+<!-- ============ WHY ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">The problem</div>
+  <h2 class="proj-h2">A 500-volt battery that has to prove it is safe, continuously</h2>
+  <p>
+    The tractive battery on an electric Formula Student car stores enough energy to be lethal.
+    The competition rules treat the BMS as a safety device rather than a convenience: it must
+    measure <strong>every cell's voltage</strong> and the temperature of critical points in the
+    pack whenever the tractive system is live or a charger is attached, and the moment anything
+    reads out of bounds it must <strong>open the shutdown circuit</strong> and light an indicator
+    that stays lit until a human resets it.
+  </p>
+  <p>
+    That framing drives the whole design. There is no "retry and hope" path and no state where a
+    detected fault quietly goes away — a fault, once seen, is latched. The interesting engineering
+    is in getting 144 trustworthy measurements across a high-voltage isolation boundary fast
+    enough that the safety decision is made on fresh data.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat"><div class="stat-num">144</div><div class="stat-label">cells monitored — 8 segments × 18 series</div></div>
+    <div class="stat"><div class="stat-num">48</div><div class="stat-label">thermistors — 6 per segment</div></div>
+    <div class="stat"><div class="stat-num">16 ms</div><div class="stat-label">pack snapshot period</div></div>
+    <div class="stat"><div class="stat-num">10 ms</div><div class="stat-label">fault frame on the vehicle bus</div></div>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 1 ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Architecture — sensing</div>
+  <h2 class="proj-h2">Getting 144 measurements across the isolation boundary</h2>
+  <p>
+    Each segment has its own Analog Devices <code>ADBMS6830B</code> cell monitor sitting at pack
+    potential, measuring its 18 cell taps and 6 NTC thermistors locally. The monitors are
+    daisy-chained to each other over <strong>isoSPI</strong> — a two-wire differential link that
+    carries the four SPI signals as pulse pairs through transformers. That transformer coupling is
+    what puts a galvanic isolation boundary between the high-voltage stack and the control
+    electronics, which the rules require at every module-to-module boundary.
+  </p>
+  <p>
+    On the low-voltage side an <code>ADBMS6822</code> bridge translates isoSPI back into ordinary
+    4-wire SPI for the Teensy. The MCU never touches pack potential; it only ever talks to the
+    bridge.
+  </p>
+
+  <figure>
+    <div class="dgm-wrap"><svg class="dgm" viewBox="0 0 880 348" role="img" aria-label="Eight battery segments, each with an ADBMS6830B cell monitor, daisy-chained over isoSPI across a galvanic isolation boundary to an ADBMS6822 bridge, which speaks 4-wire SPI to a Teensy 4.1. An IMD provides a separate digital isolation-fault input to the Teensy.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8A69F"/>
+        </marker>
+        <marker id="arS" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M10,0 L0,5 L10,10 z" fill="#A8A69F"/>
+        </marker>
+      </defs>
+
+      <!-- group labels -->
+      <text class="t-group" x="180" y="30" text-anchor="middle">TRACTIVE BATTERY — HIGH VOLTAGE</text>
+      <text class="t-group" x="640" y="30" text-anchor="middle">CONTROL SIDE — LOW VOLTAGE</text>
+
+      <!-- isolation boundary -->
+      <line class="rule-iso" x1="380" y1="44" x2="380" y2="122"/>
+      <line class="rule-iso" x1="380" y1="158" x2="380" y2="300"/>
+      <text class="t-edge" x="380" y="320" text-anchor="middle" fill="#C4773B">galvanic isolation boundary · required at every module boundary</text>
+
+      <!-- segment 1 -->
+      <rect class="box-hw" x="24" y="52" width="148" height="52" rx="8"/>
+      <text class="t-title" x="98" y="74" text-anchor="middle">Segment 1</text>
+      <text class="t-sub" x="98" y="91" text-anchor="middle">18 cells · 6 NTC</text>
+      <rect class="box" x="200" y="52" width="136" height="52" rx="8"/>
+      <text class="t-title" x="268" y="74" text-anchor="middle">ADBMS6830B</text>
+      <text class="t-sub" x="268" y="91" text-anchor="middle">cell monitor</text>
+      <line class="edge" x1="172" y1="78" x2="196" y2="78" marker-end="url(#ar)"/>
+
+      <!-- segment 2 -->
+      <rect class="box-hw" x="24" y="122" width="148" height="52" rx="8"/>
+      <text class="t-title" x="98" y="144" text-anchor="middle">Segment 2</text>
+      <text class="t-sub" x="98" y="161" text-anchor="middle">18 cells · 6 NTC</text>
+      <rect class="box" x="200" y="122" width="136" height="52" rx="8"/>
+      <text class="t-title" x="268" y="144" text-anchor="middle">ADBMS6830B</text>
+      <text class="t-sub" x="268" y="161" text-anchor="middle">cell monitor</text>
+      <line class="edge" x1="172" y1="148" x2="196" y2="148" marker-end="url(#ar)"/>
+
+      <!-- continuation -->
+      <text class="t-sub" x="98" y="204" text-anchor="middle">segments 3–7</text>
+      <text class="t-title" x="268" y="206" text-anchor="middle" fill="#A8A69F">⋮</text>
+
+      <!-- segment 8 -->
+      <rect class="box-hw" x="24" y="222" width="148" height="52" rx="8"/>
+      <text class="t-title" x="98" y="244" text-anchor="middle">Segment 8</text>
+      <text class="t-sub" x="98" y="261" text-anchor="middle">18 cells · 6 NTC</text>
+      <rect class="box" x="200" y="222" width="136" height="52" rx="8"/>
+      <text class="t-title" x="268" y="244" text-anchor="middle">ADBMS6830B</text>
+      <text class="t-sub" x="268" y="261" text-anchor="middle">cell monitor</text>
+      <line class="edge" x1="172" y1="248" x2="196" y2="248" marker-end="url(#ar)"/>
+
+      <!-- daisy chain -->
+      <line class="edge" x1="268" y1="104" x2="268" y2="122"/>
+      <line class="edge" x1="268" y1="174" x2="268" y2="192"/>
+      <line class="edge" x1="268" y1="216" x2="268" y2="222"/>
+      <text class="t-edge" x="352" y="196" text-anchor="end">daisy chain</text>
+
+      <!-- isoSPI crossing -->
+      <line class="edge-key" x1="336" y1="148" x2="424" y2="148" marker-end="url(#ar)" marker-start="url(#arS)"/>
+      <text class="t-edge" x="380" y="138" text-anchor="middle" fill="#C4773B">isoSPI · 2-wire</text>
+
+      <!-- bridge -->
+      <rect class="box-key" x="424" y="120" width="150" height="56" rx="8"/>
+      <text class="t-title" x="499" y="143" text-anchor="middle">ADBMS6822</text>
+      <text class="t-sub" x="499" y="160" text-anchor="middle">isoSPI ↔ SPI bridge</text>
+
+      <!-- bridge to teensy -->
+      <line class="edge" x1="574" y1="148" x2="636" y2="148" marker-end="url(#ar)"/>
+      <text class="t-edge" x="605" y="138" text-anchor="middle">SPI mode 3</text>
+
+      <!-- teensy -->
+      <rect class="box" x="640" y="112" width="216" height="72" rx="8"/>
+      <text class="t-title" x="748" y="140" text-anchor="middle">Teensy 4.1</text>
+      <text class="t-sub" x="748" y="157" text-anchor="middle">Cortex-M7 @ 600 MHz</text>
+      <text class="t-sub" x="748" y="172" text-anchor="middle">FreeRTOS · PEC-validates every read</text>
+
+      <!-- IMD -->
+      <rect class="box-alt" x="640" y="238" width="216" height="52" rx="8"/>
+      <text class="t-title" x="748" y="260" text-anchor="middle">IMD</text>
+      <text class="t-sub" x="748" y="277" text-anchor="middle">isolation monitoring device</text>
+      <line class="edge" x1="748" y1="238" x2="748" y2="188" marker-end="url(#ar)"/>
+      <text class="t-edge" x="758" y="215" text-anchor="start">fault line</text>
+    </svg></div>
+    <figcaption>
+      <strong>Where the isolation boundary sits.</strong> Everything left of the dashed line floats at
+      pack potential. The only thing crossing it is the transformer-coupled isoSPI pair — which is
+      precisely why the rules accept it as a module-to-module isolation boundary. The IMD reports
+      insulation failures on the low-voltage side as a separate digital input.
+    </figcaption>
+  </figure>
+
+  <h3 class="proj-h3">Trusting the data</h3>
+  <p>
+    A daisy chain of transformers through a noisy vehicle is not a friendly channel, so nothing is
+    taken at face value. Every command the Teensy sends carries a <strong>PEC15</strong> checksum
+    and every data group that comes back carries a <strong>PEC10</strong>; a mismatch marks the
+    snapshot invalid rather than letting a corrupted voltage reach the fault logic. A missing or
+    stale measurement is itself a fault condition under the rules, so silence is treated as
+    failure, not as "no news."
+  </p>
+</section>
+
+<!-- ============ DIAGRAM 2 ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Architecture — firmware</div>
+  <h2 class="proj-h2">Nine tasks, three priorities, one shared picture of the pack</h2>
+  <p>
+    <code>setup()</code> initialises the peripherals, seeds the shared state, spawns the tasks and
+    hands control to the FreeRTOS scheduler — it never returns, and <code>loop()</code> is unused.
+    From there every task operates on the same few global structs: <code>BatteryStatus</code>
+    holds the cell and thermistor arrays plus the pack summary, <code>ChargingStatus</code> holds
+    the charger link, and <code>BMSStatus</code> wraps both with the active faults, the latched
+    faults, and the current state.
+  </p>
+  <p>
+    Priorities are assigned by consequence, not by convenience. The tasks that can open the
+    shutdown circuit or report a fault to the rest of the car run at the <strong>highest
+    priority</strong> and preempt everything else; charger housekeeping runs at the lowest. A
+    charger handshake can never delay a fault from reaching the shutdown circuit.
+  </p>
+
+  <figure>
+    <div class="dgm-wrap"><svg class="dgm" viewBox="0 0 880 420" role="img" aria-label="Producer tasks — data acquisition, CAN charger receive, and charger input — write into the shared BMSStatus, BatteryStatus and ChargingStatus globals. Consumer tasks — fault handler, CAN fault transmit, CAN slow telemetry, and charging heartbeat — read from them. Each task is annotated with its FreeRTOS priority and cadence.">
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8A69F"/>
+        </marker>
+      </defs>
+
+      <text class="t-group" x="142" y="32" text-anchor="middle">PRODUCERS</text>
+      <text class="t-group" x="440" y="32" text-anchor="middle">SHARED STATE</text>
+      <text class="t-group" x="738" y="32" text-anchor="middle">CONSUMERS</text>
+
+      <!-- shared state -->
+      <rect class="box-key" x="336" y="56" width="208" height="326" rx="10"/>
+      <text class="t-title" x="440" y="84" text-anchor="middle">BMSStatus</text>
+      <text class="t-sub" x="440" y="102" text-anchor="middle">state · active_faults</text>
+      <text class="t-sub" x="440" y="117" text-anchor="middle">latched_faults</text>
+      <line class="rule" x1="360" y1="140" x2="520" y2="140"/>
+      <text class="t-title" x="440" y="166" text-anchor="middle">BatteryStatus</text>
+      <text class="t-sub" x="440" y="184" text-anchor="middle">144 cell mV · 48 temps</text>
+      <text class="t-sub" x="440" y="199" text-anchor="middle">pack V · min/max · SOC</text>
+      <line class="rule" x1="360" y1="222" x2="520" y2="222"/>
+      <text class="t-title" x="440" y="248" text-anchor="middle">ChargingStatus</text>
+      <text class="t-sub" x="440" y="266" text-anchor="middle">charger V / I readback</text>
+      <text class="t-sub" x="440" y="281" text-anchor="middle">heartbeat payload · flags</text>
+      <line class="rule" x1="360" y1="304" x2="520" y2="304"/>
+      <text class="t-sub" x="440" y="330" text-anchor="middle">globals declared in</text>
+      <text class="t-sub" x="440" y="346" text-anchor="middle">main.cpp, passed to</text>
+      <text class="t-sub" x="440" y="362" text-anchor="middle">each task as context</text>
+
+      <!-- producers -->
+      <rect class="box" x="24" y="56" width="236" height="70" rx="8"/>
+      <text class="t-title" x="40" y="80">data_aq_task</text>
+      <text class="t-sub" x="40" y="98">MED (3) · every 16 ms</text>
+      <text class="t-sub" x="40" y="114">read + PEC-check pack, build snapshot</text>
+      <line class="edge-key" x1="260" y1="91" x2="332" y2="91" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="296" y="82" text-anchor="middle" fill="#C4773B">writes</text>
+
+      <rect class="box" x="24" y="146" width="236" height="70" rx="8"/>
+      <text class="t-title" x="40" y="170">canChargerRxTask</text>
+      <text class="t-sub" x="40" y="188">MED (3) · blocks on RX queue</text>
+      <text class="t-sub" x="40" y="204">decodes charger frame 0x18FF50E5</text>
+      <line class="edge" x1="260" y1="181" x2="332" y2="181" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="296" y="172" text-anchor="middle">writes</text>
+
+      <rect class="box" x="24" y="236" width="236" height="70" rx="8"/>
+      <text class="t-title" x="40" y="260">charger_input_task</text>
+      <text class="t-sub" x="40" y="278">LOW (1)</text>
+      <text class="t-sub" x="40" y="294">detects charger connect</text>
+      <line class="edge" x1="260" y1="271" x2="332" y2="271" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="296" y="262" text-anchor="middle">writes</text>
+
+      <!-- consumers -->
+      <rect class="box-key" x="620" y="56" width="236" height="70" rx="8"/>
+      <text class="t-title" x="636" y="80">fault_handler_task</text>
+      <text class="t-sub" x="636" y="98">HIGH (5) · polls every 50 ms</text>
+      <text class="t-sub" x="636" y="114">asserts SHUTDOWN_PIN on ERROR</text>
+      <line class="edge-key" x1="548" y1="91" x2="616" y2="91" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="582" y="82" text-anchor="middle" fill="#C4773B">reads</text>
+
+      <rect class="box" x="620" y="146" width="236" height="70" rx="8"/>
+      <text class="t-title" x="636" y="170">canTxFaultsTask</text>
+      <text class="t-sub" x="636" y="188">HIGH (5) · every 10 ms</text>
+      <text class="t-sub" x="636" y="204">BMS_Faults → 0x010</text>
+      <line class="edge" x1="548" y1="181" x2="616" y2="181" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="582" y="172" text-anchor="middle">reads</text>
+
+      <rect class="box" x="620" y="236" width="236" height="70" rx="8"/>
+      <text class="t-title" x="636" y="260">canTxSlowTask</text>
+      <text class="t-sub" x="636" y="278">MED (3) · every 500 ms</text>
+      <text class="t-sub" x="636" y="294">SOC → 0x020 · temps → 0x021</text>
+      <line class="edge" x1="548" y1="271" x2="616" y2="271" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="582" y="262" text-anchor="middle">reads</text>
+
+      <rect class="box" x="620" y="326" width="236" height="70" rx="8"/>
+      <text class="t-title" x="636" y="350">charging_heartbeat_task</text>
+      <text class="t-sub" x="636" y="368">LOW (1) · 1 Hz</text>
+      <text class="t-sub" x="636" y="384">BMS → charger control frame</text>
+      <line class="edge" x1="548" y1="361" x2="616" y2="361" marker-end="url(#ar2)"/>
+      <text class="t-edge" x="582" y="352" text-anchor="middle">reads</text>
+    </svg></div>
+    <figcaption>
+      <strong>Producers write, consumers read, priority decides who wins.</strong> The two paths
+      highlighted in amber are the safety path: <code>data_aq_task</code> is the only writer of the
+      pack picture, and <code>fault_handler_task</code> — at the highest priority — is the only task
+      that can open the shutdown circuit.
+    </figcaption>
+  </figure>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Module</th><th>Responsibility</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong><code>shared/</code></strong></td><td>Header-only data model: pack limits, fault bits, state enum. Every other module depends on it and it depends on nothing.</td></tr>
+        <tr><td><strong><code>data_aq/</code></strong></td><td>Drives the monitor stack over SPI, validates PEC, builds the pack snapshot, computes the summary and state of charge, evaluates faults.</td></tr>
+        <tr><td><strong><code>fault_handler/</code></strong></td><td>Watches the BMS state and asserts the shutdown pin while it is <code>ERROR</code>.</td></tr>
+        <tr><td><strong><code>charging/</code></strong></td><td>Charger connect/heartbeat state machine, pack limits in the control frame, and the conditions that stop a charge.</td></tr>
+        <tr><td><strong><code>can_handler/</code></strong></td><td>FlexCAN_T4 on CAN1 at 500 kbit/s. RX interrupt enqueues frames; TX encoders publish faults, SOC and temperatures per the vehicle DBC.</td></tr>
+        <tr><td><strong><code>gui/</code></strong></td><td>Human-readable telemetry over USB serial — the thing you actually use when the pack is on the bench.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ DIAGRAM 3 ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Architecture — safety</div>
+  <h2 class="proj-h2">The fault path: detect, latch, open, stay open</h2>
+  <p>
+    Every acquisition cycle ends by evaluating the fresh snapshot against the five conditions the
+    rules enumerate. If any of them trips, the corresponding bit is set in
+    <code>active_faults</code> and — this is the important part — OR'd into
+    <code>latched_faults</code>, which nothing in the firmware ever clears. The state machine moves
+    to <code>ERROR</code> and does not move back.
+  </p>
+
+  <figure>
+    <div class="dgm-wrap"><svg class="dgm" viewBox="0 0 880 470" role="img" aria-label="Five monitored fault conditions feed evaluate_faults. If any fault bit is set, it is latched into latched_faults, the state becomes ERROR, and the fault handler asserts the shutdown pin, the BMS indicator and the tractive system status indicator. If no fault is set, the BMS stays in its normal idle or charging state. The only path out of ERROR is a manual reset.">
+      <defs>
+        <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8A69F"/>
+        </marker>
+        <marker id="ar3k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#C4773B"/>
+        </marker>
+      </defs>
+
+      <text class="t-group" x="440" y="24" text-anchor="middle">MONITORED CONDITIONS — CHECKED EVERY SNAPSHOT</text>
+
+      <!-- condition chips -->
+      <rect class="box-alt" x="24" y="38" width="156" height="56" rx="8"/>
+      <text class="t-title" x="102" y="60" text-anchor="middle">Cell voltage</text>
+      <text class="t-sub" x="102" y="78" text-anchor="middle">outside 3.00–4.23 V</text>
+
+      <rect class="box-alt" x="196" y="38" width="156" height="56" rx="8"/>
+      <text class="t-title" x="274" y="60" text-anchor="middle">Cell temperature</text>
+      <text class="t-sub" x="274" y="78" text-anchor="middle">above limit</text>
+
+      <rect class="box-alt" x="368" y="38" width="156" height="56" rx="8"/>
+      <text class="t-title" x="446" y="60" text-anchor="middle">Measurement</text>
+      <text class="t-sub" x="446" y="78" text-anchor="middle">missing or stale</text>
+
+      <rect class="box-alt" x="540" y="38" width="156" height="56" rx="8"/>
+      <text class="t-title" x="618" y="60" text-anchor="middle">Comms / PEC</text>
+      <text class="t-sub" x="618" y="78" text-anchor="middle">checksum failure</text>
+
+      <rect class="box-alt" x="712" y="38" width="144" height="56" rx="8"/>
+      <text class="t-title" x="784" y="60" text-anchor="middle">IMD</text>
+      <text class="t-sub" x="784" y="78" text-anchor="middle">isolation fault</text>
+
+      <!-- converge -->
+      <line class="edge" x1="102" y1="94" x2="102" y2="112"/>
+      <line class="edge" x1="274" y1="94" x2="274" y2="112"/>
+      <line class="edge" x1="446" y1="94" x2="446" y2="112"/>
+      <line class="edge" x1="618" y1="94" x2="618" y2="112"/>
+      <line class="edge" x1="784" y1="94" x2="784" y2="112"/>
+      <line class="edge" x1="102" y1="112" x2="784" y2="112"/>
+      <line class="edge" x1="440" y1="112" x2="440" y2="134" marker-end="url(#ar3)"/>
+
+      <!-- evaluate -->
+      <rect class="box" x="290" y="136" width="300" height="52" rx="8"/>
+      <text class="t-title" x="440" y="158" text-anchor="middle">evaluate_faults()</text>
+      <text class="t-sub" x="440" y="175" text-anchor="middle">builds the active fault bitfield</text>
+      <line class="edge" x1="440" y1="188" x2="440" y2="212" marker-end="url(#ar3)"/>
+
+      <!-- decision -->
+      <polygon class="box" points="440,214 536,252 440,290 344,252"/>
+      <text class="t-title" x="440" y="248" text-anchor="middle">any bit</text>
+      <text class="t-title" x="440" y="264" text-anchor="middle">set?</text>
+
+      <!-- no branch -->
+      <line class="edge" x1="536" y1="252" x2="636" y2="252" marker-end="url(#ar3)"/>
+      <text class="t-edge" x="586" y="243" text-anchor="middle">no</text>
+      <rect class="box-hw" x="640" y="224" width="216" height="56" rx="8"/>
+      <text class="t-title" x="748" y="246" text-anchor="middle">IDLE / CHARGING</text>
+      <text class="t-sub" x="748" y="264" text-anchor="middle">normal operation continues</text>
+
+      <!-- yes branch -->
+      <line class="edge-key" x1="440" y1="290" x2="440" y2="312" marker-end="url(#ar3k)"/>
+      <text class="t-edge" x="452" y="305" text-anchor="start" fill="#C4773B">yes</text>
+      <rect class="box-key" x="290" y="314" width="300" height="58" rx="8"/>
+      <text class="t-title" x="440" y="338" text-anchor="middle">latched_faults |= active_faults</text>
+      <text class="t-sub" x="440" y="356" text-anchor="middle">state = ERROR — never cleared in firmware</text>
+      <line class="edge-key" x1="440" y1="372" x2="440" y2="392"/>
+
+      <!-- outputs -->
+      <rect class="box" x="24" y="400" width="264" height="56" rx="8"/>
+      <text class="t-title" x="156" y="422" text-anchor="middle">Shutdown circuit opens</text>
+      <text class="t-sub" x="156" y="440" text-anchor="middle">SHUTDOWN_PIN asserted → AIRs drop</text>
+
+      <rect class="box" x="308" y="400" width="264" height="56" rx="8"/>
+      <text class="t-title" x="440" y="422" text-anchor="middle">BMS indicator</text>
+      <text class="t-sub" x="440" y="440" text-anchor="middle">red, visible to the seated driver</text>
+
+      <rect class="box" x="592" y="400" width="264" height="56" rx="8"/>
+      <text class="t-title" x="724" y="422" text-anchor="middle">TSSI</text>
+      <text class="t-sub" x="724" y="440" text-anchor="middle">tractive-system status indicator</text>
+
+      <line class="edge-key" x1="156" y1="392" x2="724" y2="392"/>
+      <line class="edge-key" x1="156" y1="386" x2="156" y2="400" marker-end="url(#ar3k)"/>
+      <line class="edge-key" x1="440" y1="386" x2="440" y2="400" marker-end="url(#ar3k)"/>
+      <line class="edge-key" x1="724" y1="386" x2="724" y2="400" marker-end="url(#ar3k)"/>
+
+      <!-- manual reset -->
+      <path class="edge-dash" d="M590,343 H748 V284" marker-end="url(#ar3)"/>
+      <text class="t-edge" x="742" y="320" text-anchor="end">manual reset only</text>
+    </svg></div>
+    <figcaption>
+      <strong>There is no automatic way back.</strong> The dashed edge is the only route out of
+      <code>ERROR</code>, and it is a human with a physical reset — the firmware has no path that
+      clears a latched fault. That asymmetry is deliberate: a pack fault that clears itself is a
+      pack fault you get to have twice.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============ CHARGING ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Charging</div>
+  <h2 class="proj-h2">A handshake that defaults to stopping</h2>
+  <p>
+    Charging runs over the same CAN bus using 29-bit extended frames. The BMS sends a control frame
+    to the charger once a second carrying the pack's voltage and current limits; the charger answers
+    with its actual output and its own fault bits. If the heartbeat stops, the charger stops — the
+    protocol's failure mode is "no charge," which is the one you want.
+  </p>
+  <p>The firmware stops a charge on any of three conditions:</p>
+  <ul>
+    <li><strong>Any latched fault</strong> — the same latch that drives the shutdown circuit also gates charging, so a fault detected while charging ends the charge.</li>
+    <li><strong>Charger over-limit</strong> — reported voltage or current beyond the configured pack maximum.</li>
+    <li><strong>State of charge ≥ 85%</strong> — estimated from pack voltage against empty, mid and full breakpoints.</li>
+  </ul>
+  <div class="callout">
+    <div class="callout-label">Rules constraint</div>
+    <p>
+      Cell balancing is not permitted while the shutdown circuit is open, which means balancing can
+      never be a background activity — it has to be explicitly tied to the same state the safety
+      path owns.
+    </p>
+  </div>
+</section>
+
+<!-- ============ STATUS ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Status</div>
+  <h2 class="proj-h2">Where it stands</h2>
+  <p>
+    The architecture, the shared data model, the CAN layer and the charging state machine are in
+    place, and the driver is up far enough to configure the monitor stack, run the wake sequence and
+    read back configuration and device IDs over the real hardware. The current work is bringing up
+    the full voltage and thermistor read path against a live segment and validating the PEC
+    implementation end to end — the point where measurements stop coming from a test harness and
+    start coming from actual cells.
+  </p>
+  <p>
+    Build and flash is PlatformIO (<code>pio run -t upload</code>) against a Teensy 4.1, with a
+    serial GUI task for bench diagnostics.
+  </p>
+</section>
+
+</div>
+
+<div class="proj-next">
+  <a href="reefwatch.html" class="btn-secondary">Next project — ReefWatch →</a>
+  <a href="../index.html#projects" class="btn-secondary">All projects</a>
+</div>
+
+<footer>
+  <span>© 2026 Chloe Gao</span>
+  <span>chloegao.dev</span>
+</footer>
+
+<script>
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40);
+});
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
+},{threshold:0.05});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReefWatch — Chloe Gao</title>
+<meta name="description" content="ReefWatch: an FPGA-accelerated coral-health segmentation pipeline on the AMD Kria KV260, verified against an Unreal Engine digital twin of a real reef.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/project.css">
+</head>
+<body>
+
+<nav id="nav">
+  <a href="../index.html" class="nav-logo">Chloe Gao</a>
+  <div class="nav-links">
+    <a href="../index.html#about">About</a>
+    <a href="../index.html#experience">Experience</a>
+    <a href="../index.html#projects">Projects</a>
+    <a href="https://www.linkedin.com/in/chloe-gao-84550a247/" target="_blank" class="nav-cta">Connect →</a>
+  </div>
+</nav>
+
+<div class="proj-hero">
+  <div class="breadcrumb"><a href="../index.html">Home</a> &nbsp;/&nbsp; <a href="../index.html#projects">Projects</a> &nbsp;/&nbsp; ReefWatch</div>
+  <div class="proj-eyebrow">Capstone · FPGA Acceleration · Computer Vision</div>
+  <h1 class="proj-title">Reef<em>Watch</em></h1>
+  <p class="proj-lede">
+    A coral-health segmentation model running on FPGA silicon, cheap enough in power to belong on
+    an autonomous underwater vehicle. It labels every pixel of a reef frame as live, bleached,
+    degraded or other, and returns a health map an AUV can navigate by.
+  </p>
+
+  <div class="proj-meta">
+    <div class="meta-cell">
+      <div class="meta-label">My role</div>
+      <div class="meta-value">Model deployment pipeline — quantization, compilation, and Kria KV260 deployment</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Team</div>
+      <div class="meta-value">3-person capstone<br>Advisor: Prof. Mircea Stan</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Timeline</div>
+      <div class="meta-value">2026–27<br>in progress</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label">Target</div>
+      <div class="meta-value">AMD Kria KV260<br>Zynq UltraScale+ ZU5EV</div>
+    </div>
+  </div>
+
+  <div class="proj-tech">
+    <span class="tech-chip">PyTorch</span>
+    <span class="tech-chip">Vitis AI</span>
+    <span class="tech-chip">VART</span>
+    <span class="tech-chip">Quantization</span>
+    <span class="tech-chip">Semantic segmentation</span>
+    <span class="tech-chip">Unreal Engine 5</span>
+    <span class="tech-chip">Kria KV260</span>
+  </div>
+</div>
+
+<div class="proj-body">
+
+<!-- ============ RESULT UP FRONT ============ -->
+<section class="proj-section fade-in" style="border-top:none;padding-top:8px">
+  <div class="section-label">Latest result</div>
+  <h2 class="proj-h2">The quantized model is running on the board</h2>
+  <p>
+    As of <strong>29 September 2026</strong> the INT8 segmentation model is deployed and evaluated
+    on real Kria KV260 hardware, executing on the DPU through the VART runtime over 200 reef frames.
+  </p>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-num">12.99</div><div class="stat-label">FPS on hardware — clears our ≥10 FPS requirement</div></div>
+    <div class="stat"><div class="stat-num">76.99<span style="font-size:18px"> ms</span></div><div class="stat-label">mean DPU latency per frame</div></div>
+    <div class="stat"><div class="stat-num">0.57<span style="font-size:18px"> ms</span></div><div class="stat-label">total spread across 200 frames</div></div>
+    <div class="stat"><div class="stat-num">200</div><div class="stat-label">frames evaluated on-board</div></div>
+  </div>
+  <div class="callout">
+    <div class="callout-label">Why the spread matters more than the mean</div>
+    <p>
+      Across 200 inferences the latency ranged from 76.86 ms to 77.43 ms — a spread of about
+      half a millisecond, under 1% of the mean. That determinism is the thing a general-purpose
+      processor struggles to give you: the accelerator is a fixed dataflow circuit, so there is no
+      scheduler, no cache miss and no thermal governor to make one frame slower than the last.
+      For a vehicle making navigation decisions from perception output, a predictable worst case is
+      worth more than a faster average.
+    </p>
+  </div>
+</section>
+
+<!-- ============ WHY ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">The problem</div>
+  <h2 class="proj-h2">Reef monitoring doesn't scale with divers</h2>
+  <p>
+    Coral reefs cover less than 1% of the ocean floor and support roughly a quarter of all marine
+    species. They are also disappearing: between 2009 and 2018 the world lost about 14% of its coral
+    cover, and during the fourth global bleaching event 84% of the world's reef area saw
+    bleaching-level heat stress. Restoration works — coral fragments and larvae placed on damaged
+    reef do survive — but the surveying and the placement both depend on human divers, which is
+    exactly the part that cannot scale to the area involved.
+  </p>
+  <p>
+    An autonomous underwater vehicle could survey continuously, but it is constrained in every
+    direction at once. Battery capacity sets mission length. A sealed pressure housing cannot be
+    actively cooled, so every watt has to conduct out through the hull. And acoustic or tethered
+    links are far too narrow to stream raw video to the surface. Whatever decides which patch of
+    reef is damaged has to do it <strong>onboard</strong>, in real time, on a very small power
+    budget.
+  </p>
+
+  <h3 class="proj-h3">Why an FPGA rather than an embedded GPU</h3>
+  <p>
+    Embedded GPUs like the Jetson Orin Nano sit in the 7–15 W range. The AMD Kria K26 module is
+    specified at 7.5 W typical, and because this workload uses only a fraction of its logic and DSP
+    resources, inference should land well below that. The architectural reason is that an FPGA
+    accelerator has no von Neumann instruction-fetch overhead — the multiply-accumulate datapath is
+    wired into the fabric and data flows through it, rather than each operation being fetched,
+    decoded and dispatched. In DNN inference the dominant energy cost is data movement and control,
+    not arithmetic, which is what makes a spatial architecture pay off here.
+  </p>
+</section>
+
+<!-- ============ DIAGRAM 1 ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Architecture — system</div>
+  <h2 class="proj-h2">A digital twin in the loop with real silicon</h2>
+  <p>
+    We don't have access to a coral reef, so verification runs against a photorealistic stand-in:
+    a 3D Gaussian-splat reconstruction of a real survey plot in Tabuhan, Indonesia, rendered in
+    Unreal Engine 5. Bleaching events are staged by recoloring individual coral colonies in the
+    splat, which also gives us ground-truth masks for free. A simulated AUV flies a lawnmower
+    survey at 1.2 m altitude and the rendered frames go to the <strong>physical</strong> KV260 over
+    Ethernet — so the accelerator being tested is the real one, running the real bitstream.
+  </p>
+
+  <figure>
+    <div class="dgm-wrap"><svg class="dgm" viewBox="0 0 880 340" role="img" aria-label="An Unreal Engine digital twin renders reef frames from a simulated AUV camera and sends them over Ethernet to a physical Kria KV260. On the board, the ARM processing system preprocesses the frame and the programmable logic runs INT8 segmentation on the DPU. The resulting mask becomes a health map and feeds an STM32 decision tree that drives thrusters, whose motion determines the next frame rendered in the simulation.">
+      <defs>
+        <marker id="rw1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8A69F"/>
+        </marker>
+        <marker id="rw1k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#C4773B"/>
+        </marker>
+      </defs>
+
+      <!-- Unreal -->
+      <rect class="box-hw" x="24" y="70" width="190" height="120" rx="9"/>
+      <text class="t-title" x="119" y="98" text-anchor="middle">Unreal Engine 5</text>
+      <text class="t-sub" x="119" y="118" text-anchor="middle">Gaussian-splat reef</text>
+      <text class="t-sub" x="119" y="134" text-anchor="middle">Tabuhan, Indonesia</text>
+      <text class="t-sub" x="119" y="154" text-anchor="middle">simulated AUV</text>
+      <text class="t-sub" x="119" y="170" text-anchor="middle">lawnmower survey @ 1.2 m</text>
+
+      <line class="edge" x1="214" y1="130" x2="276" y2="130" marker-end="url(#rw1)"/>
+      <text class="t-edge" x="245" y="114" text-anchor="middle">640×360</text>
+      <text class="t-edge" x="245" y="152" text-anchor="middle">TCP</text>
+
+      <!-- KV260 container -->
+      <rect class="box-alt" x="280" y="48" width="320" height="212" rx="10"/>
+      <text class="t-group" x="440" y="70" text-anchor="middle">AMD KRIA KV260 — PHYSICAL BOARD</text>
+
+      <rect class="box" x="296" y="86" width="288" height="66" rx="8"/>
+      <text class="t-title" x="440" y="110" text-anchor="middle">Processing System · Cortex-A53</text>
+      <text class="t-sub" x="440" y="128" text-anchor="middle">resize + normalize · VART runner</text>
+      <text class="t-sub" x="440" y="144" text-anchor="middle">loads the .xmodel XIR graph</text>
+
+      <line class="edge-key" x1="440" y1="152" x2="440" y2="172" marker-end="url(#rw1k)"/>
+
+      <rect class="box-key" x="296" y="176" width="288" height="68" rx="8"/>
+      <text class="t-title" x="440" y="200" text-anchor="middle">Programmable Logic · DPUCZDX8G</text>
+      <text class="t-sub" x="440" y="218" text-anchor="middle">INT8 segmentation, no CPU fallback</text>
+      <text class="t-sub" x="440" y="234" text-anchor="middle">76.99 ms per frame</text>
+
+      <!-- outputs -->
+      <path class="edge" d="M600,210 H632"/>
+      <path class="edge" d="M632,210 V110 H664" marker-end="url(#rw1)"/>
+      <path class="edge" d="M632,210 H664" marker-end="url(#rw1)"/>
+      <text class="t-edge" x="616" y="201" text-anchor="middle">mask</text>
+
+      <rect class="box" x="668" y="76" width="188" height="68" rx="8"/>
+      <text class="t-title" x="762" y="100" text-anchor="middle">Health map</text>
+      <text class="t-sub" x="762" y="118" text-anchor="middle">live · bleached</text>
+      <text class="t-sub" x="762" y="134" text-anchor="middle">degraded · other</text>
+
+      <rect class="box" x="668" y="176" width="188" height="68" rx="8"/>
+      <text class="t-title" x="762" y="200" text-anchor="middle">STM32 F446RE</text>
+      <text class="t-sub" x="762" y="218" text-anchor="middle">decision tree → PWM</text>
+      <text class="t-sub" x="762" y="234" text-anchor="middle">ESC + pan/tilt servos</text>
+
+      <!-- closed loop -->
+      <path class="edge-dash" d="M762,244 V302 H119 V194" marker-end="url(#rw1)"/>
+      <text class="t-edge" x="440" y="320" text-anchor="middle">vehicle motion determines the next frame rendered — closed loop</text>
+    </svg></div>
+    <figcaption>
+      <strong>The loop is closed through real hardware.</strong> Perception runs on the board, not
+      in the simulator; the simulator only supplies imagery and consumes motion. Because the AUV's
+      pose in the scene is known exactly at render time, every detection can be placed on the reef
+      map without the projection uncertainty a physical deployment would carry.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============ DIAGRAM 2 — MY PART ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">My contribution</div>
+  <h2 class="proj-h2">Getting a PyTorch model onto a DPU without losing it</h2>
+  <p>
+    My piece of this is the deployment pipeline: taking the trained segmentation model and carrying
+    it through quantization, compilation and onto the KV260's DPU — while keeping accuracy loss
+    inside budget and ensuring the graph runs <strong>entirely</strong> on the accelerator. That
+    last constraint is the one that bites. If a single layer isn't supported by the DPU, the
+    compiler partitions it out to the ARM cores, and the round trip through the CPU costs far more
+    than the layer itself. A model that "works" with one CPU fallback layer can be several times
+    slower than one that doesn't.
+  </p>
+
+  <figure>
+    <div class="dgm-wrap"><svg class="dgm" viewBox="0 0 880 300" role="img" aria-label="A five stage deployment pipeline: a PyTorch FP32 model is quantized to INT8 by vai_q_pytorch, compiled by the Vitis AI compiler into an xmodel XIR graph, loaded by the VART runtime on the ARM cores, and executed on the DPUCZDX8G in programmable logic. Accuracy loss is budgeted at the quantization stage; the final two stages must run with no CPU fallback. Measured on hardware: 200 images, 76.99 millisecond mean latency, 12.99 frames per second.">
+      <defs>
+        <marker id="rw2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8A69F"/>
+        </marker>
+      </defs>
+
+      <rect class="box" x="22" y="62" width="148" height="92" rx="8"/>
+      <text class="t-title" x="96" y="92" text-anchor="middle">PyTorch model</text>
+      <text class="t-sub" x="96" y="112" text-anchor="middle">FPN + ResNet</text>
+      <text class="t-sub" x="96" y="128" text-anchor="middle">backbone</text>
+      <text class="t-sub" x="96" y="144" text-anchor="middle">FP32 weights</text>
+
+      <line class="edge" x1="170" y1="108" x2="190" y2="108" marker-end="url(#rw2)"/>
+
+      <rect class="box-key" x="194" y="62" width="148" height="92" rx="8"/>
+      <text class="t-title" x="268" y="92" text-anchor="middle">vai_q_pytorch</text>
+      <text class="t-sub" x="268" y="112" text-anchor="middle">calibrate on</text>
+      <text class="t-sub" x="268" y="128" text-anchor="middle">reef imagery</text>
+      <text class="t-sub" x="268" y="144" text-anchor="middle">FP32 → INT8</text>
+
+      <line class="edge" x1="342" y1="108" x2="362" y2="108" marker-end="url(#rw2)"/>
+
+      <rect class="box" x="366" y="62" width="148" height="92" rx="8"/>
+      <text class="t-title" x="440" y="92" text-anchor="middle">Vitis AI compiler</text>
+      <text class="t-sub" x="440" y="112" text-anchor="middle">partitions the graph</text>
+      <text class="t-sub" x="440" y="128" text-anchor="middle">emits DPU instructions</text>
+      <text class="t-sub" x="440" y="144" text-anchor="middle">→ .xmodel</text>
+
+      <line class="edge" x1="514" y1="108" x2="534" y2="108" marker-end="url(#rw2)"/>
+
+      <rect class="box" x="538" y="62" width="148" height="92" rx="8"/>
+      <text class="t-title" x="612" y="92" text-anchor="middle">VART runtime</text>
+      <text class="t-sub" x="612" y="112" text-anchor="middle">on Cortex-A53</text>
+      <text class="t-sub" x="612" y="128" text-anchor="middle">deserialize XIR,</text>
+      <text class="t-sub" x="612" y="144" text-anchor="middle">bind DPU subgraph</text>
+
+      <line class="edge" x1="686" y1="108" x2="706" y2="108" marker-end="url(#rw2)"/>
+
+      <rect class="box-key" x="710" y="62" width="148" height="92" rx="8"/>
+      <text class="t-title" x="784" y="92" text-anchor="middle">DPUCZDX8G</text>
+      <text class="t-sub" x="784" y="112" text-anchor="middle">programmable logic</text>
+      <text class="t-sub" x="784" y="128" text-anchor="middle">INT8 MAC array</text>
+      <text class="t-sub" x="784" y="144" text-anchor="middle">fixed dataflow</text>
+
+      <!-- brackets -->
+      <path class="rule" d="M22,172 V182 H342 V172"/>
+      <text class="t-edge" x="182" y="200" text-anchor="middle">where accuracy is lost — budget &lt; 15% vs FP32</text>
+
+      <path class="rule" d="M538,172 V182 H858 V172"/>
+      <text class="t-edge" x="698" y="200" text-anchor="middle">must run with zero CPU fallback layers</text>
+
+      <!-- measured -->
+      <rect class="box-key" x="22" y="220" width="836" height="58" rx="9"/>
+      <text class="t-title" x="440" y="245" text-anchor="middle">Measured on hardware — 29 Sep 2026</text>
+      <text class="t-sub" x="440" y="264" text-anchor="middle">200 frames · 76.99 ms mean DPU latency (76.86 – 77.43 ms) · 12.99 FPS</text>
+    </svg></div>
+    <figcaption>
+      <strong>Two different failure modes, two different stages.</strong> Quantization is where
+      accuracy goes; compilation is where throughput goes. The amber stages are the two I own the
+      outcome of — the quantizer decides how much of the model survives, and the DPU decides how
+      fast what survives runs.
+    </figcaption>
+  </figure>
+
+  <h3 class="proj-h3">What quantization actually costs</h3>
+  <p>
+    Going from FP32 to INT8 cuts the memory footprint roughly fourfold, which is what makes the
+    model fit. The price is precision, and the interesting result is that the price is not the same
+    for every architecture. In our earlier backbone comparison an EfficientNet-B0 backbone scored
+    better than MobileNetV2 in full precision but <strong>broke under INT8 quantization</strong> —
+    a model that is better on paper is not necessarily the model you can deploy. That finding is
+    why the deployed network is an FPN over a ResNet backbone rather than the strongest
+    full-precision candidate.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Objective</th><th>Target</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Throughput on hardware</strong></td><td>≥ 10 FPS</td><td>12.99 FPS measured on the KV260</td></tr>
+        <tr><td><strong>Runs on DPU</strong></td><td>No CPU fallback layers</td><td>Executing on the DPU subgraph via VART</td></tr>
+        <tr><td><strong>Segmentation accuracy</strong></td><td>&gt; 0.60 mIoU on 4 health classes</td><td>0.606 / 0.615 IoU for quantized ResNet-18 / ResNet-34 on Coralscapes</td></tr>
+        <tr><td><strong>Quantization loss</strong></td><td>Within 3 points mIoU of full precision</td><td>In progress — full-precision baseline comparison underway</td></tr>
+        <tr><td><strong>Power vs. embedded GPU</strong></td><td>≥ 1.5× lower energy per inference</td><td>Not yet measured on board</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="callout-label">Context for the accuracy target</div>
+    <p>
+      Coral is one of the harder segmentation domains there is — the Coralscapes authors' best model
+      reaches 57.8 mIoU on their 39-class benchmark. Against that, 0.60 on four consolidated health
+      classes is a real target rather than a soft one.
+    </p>
+  </div>
+</section>
+
+<!-- ============ OUTPUT GALLERY ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Output</div>
+  <h2 class="proj-h2">What the model sees</h2>
+  <p>
+    Segmentation masks from the model, overlaid on frames from the digital twin. The four health
+    classes are consolidated from the fine-grained Coralscapes labels into the categories a
+    restoration decision actually turns on — you plant on degraded substrate, not on live coral.
+  </p>
+
+  <div class="legend">
+    <span class="legend-item"><span class="swatch" style="background:#4FAE52"></span>live</span>
+    <span class="legend-item"><span class="swatch" style="background:#FBFBF7;border-color:#D4D1CA"></span>bleached</span>
+    <span class="legend-item"><span class="swatch" style="background:#9B6B42"></span>degraded</span>
+    <span class="legend-item"><span class="swatch" style="background:#6E8FC4"></span>other</span>
+  </div>
+
+  <div class="gallery">
+    <figure class="shot">
+      <img src="../images/reefwatch/seg-reef-wide.jpg" alt="Segmentation overlay on a wide reef scene: green live coral, white bleached colonies, brown degraded substrate, blue background." loading="lazy">
+      <figcaption>A survey-altitude frame. Bleached colonies separate cleanly from the live coral beside them — the distinction the whole system exists to make.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="../images/reefwatch/seg-bleached-closeup.jpg" alt="Close-up segmentation overlay of a largely bleached coral colony with scattered patches of live tissue." loading="lazy">
+      <figcaption>Close range on a mostly-bleached colony. The surviving live tissue is picked out as isolated patches rather than smoothed away, which is what makes partial bleaching measurable.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="../images/reefwatch/seg-brain-coral.jpg" alt="Top-down segmentation overlay showing a live green brain coral beside a bleached white colony on sandy substrate." loading="lazy">
+      <figcaption>Top-down, a live brain coral and a bleached one side by side on open substrate — the same genus, opposite health states.</figcaption>
+    </figure>
+  </div>
+
+  <h3 class="proj-h3">Predicted class distribution</h3>
+  <p>
+    Across the 200 frames evaluated on the board, the share of pixels assigned to each class came
+    out as follows. Bleached coral is a small fraction of any reef scene, which is exactly the
+    difficulty: it is the rarest class and the one that matters most.
+  </p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Class</th><th>Share of predicted pixels</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Other</strong> — water, sand, background</td><td>71.5%</td><td><span class="bar" style="width:71.5%;background:#6E8FC4"></span></td></tr>
+        <tr><td><strong>Degraded</strong> — dead or algae-covered</td><td>16.6%</td><td><span class="bar" style="width:16.6%;background:#9B6B42"></span></td></tr>
+        <tr><td><strong>Live</strong> — healthy coral</td><td>10.3%</td><td><span class="bar" style="width:10.3%;background:#4FAE52"></span></td></tr>
+        <tr><td><strong>Bleached</strong></td><td>1.6%</td><td><span class="bar" style="width:1.6%;background:#C9C6BD"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:13.5px;color:var(--text3)">
+    These are output distributions across the evaluated set, not accuracy figures — they describe
+    what the model labelled, not how often it was right.
+  </p>
+</section>
+
+<!-- ============ DIAGRAM 3 ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">Architecture — model</div>
+  <h2 class="proj-h2">Why a feature pyramid is awkward on an FPGA</h2>
+  <p>
+    Segmentation needs detail and context at once: fine enough to trace the edge of a bleached
+    patch, wide enough to know it is coral and not sand. A Feature Pyramid Network gets both by
+    taking feature maps from several depths of the backbone, pulling them to a common width with
+    1×1 convolutions, and merging them top-down so that coarse semantic information flows back into
+    the high-resolution levels.
+  </p>
+  <p>
+    Those lateral connections are the thing that complicates the hardware. A pure classifier can
+    stream: it only ever needs a sliding window of recent rows, so a small line buffer suffices.
+    An FPN has to hold <strong>several full feature maps on-chip simultaneously</strong>, because a
+    later stage references an earlier stage's entire output. That is direct pressure on BRAM and it
+    has to be budgeted for explicitly rather than discovered during synthesis.
+  </p>
+
+  <figure>
+    <div class="dgm-wrap"><svg class="dgm" viewBox="0 0 880 386" role="img" aria-label="A bottom-up backbone produces four feature maps at one quarter, one eighth, one sixteenth and one thirty-second resolution. Each is pulled to a common channel width by a one-by-one lateral convolution into the corresponding pyramid level. The pyramid merges top-down by upsampling and adding, then all four levels feed a segmentation head that outputs a four-class mask.">
+      <defs>
+        <marker id="rw3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8A69F"/>
+        </marker>
+        <marker id="rw3k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#C4773B"/>
+        </marker>
+      </defs>
+
+      <text class="t-group" x="205" y="26" text-anchor="middle">BACKBONE — BOTTOM-UP</text>
+      <text class="t-group" x="525" y="26" text-anchor="middle">FPN — TOP-DOWN</text>
+      <text class="t-group" x="768" y="26" text-anchor="middle">HEAD</text>
+
+      <!-- input -->
+      <rect class="box-hw" x="18" y="312" width="86" height="54" rx="8"/>
+      <text class="t-title" x="61" y="336" text-anchor="middle">frame</text>
+      <text class="t-sub" x="61" y="353" text-anchor="middle">640×360</text>
+      <line class="edge" x1="104" y1="339" x2="126" y2="339" marker-end="url(#rw3)"/>
+
+      <!-- backbone stages -->
+      <rect class="box" x="130" y="90" width="150" height="54" rx="8"/>
+      <text class="t-title" x="205" y="112" text-anchor="middle">C5</text>
+      <text class="t-sub" x="205" y="129" text-anchor="middle">1/32 · deepest</text>
+
+      <rect class="box" x="130" y="164" width="150" height="54" rx="8"/>
+      <text class="t-title" x="205" y="186" text-anchor="middle">C4</text>
+      <text class="t-sub" x="205" y="203" text-anchor="middle">1/16</text>
+
+      <rect class="box" x="130" y="238" width="150" height="54" rx="8"/>
+      <text class="t-title" x="205" y="260" text-anchor="middle">C3</text>
+      <text class="t-sub" x="205" y="277" text-anchor="middle">1/8</text>
+
+      <rect class="box" x="130" y="312" width="150" height="54" rx="8"/>
+      <text class="t-title" x="205" y="334" text-anchor="middle">C2</text>
+      <text class="t-sub" x="205" y="351" text-anchor="middle">1/4 · finest</text>
+
+      <line class="edge" x1="205" y1="312" x2="205" y2="296" marker-end="url(#rw3)"/>
+      <line class="edge" x1="205" y1="238" x2="205" y2="222" marker-end="url(#rw3)"/>
+      <line class="edge" x1="205" y1="164" x2="205" y2="148" marker-end="url(#rw3)"/>
+
+      <!-- laterals -->
+      <line class="edge-key" x1="280" y1="117" x2="446" y2="117" marker-end="url(#rw3k)"/>
+      <text class="t-edge" x="363" y="108" text-anchor="middle" fill="#C4773B">1×1 conv</text>
+      <line class="edge-key" x1="280" y1="191" x2="446" y2="191" marker-end="url(#rw3k)"/>
+      <text class="t-edge" x="363" y="182" text-anchor="middle" fill="#C4773B">1×1 conv</text>
+      <line class="edge-key" x1="280" y1="265" x2="446" y2="265" marker-end="url(#rw3k)"/>
+      <text class="t-edge" x="363" y="256" text-anchor="middle" fill="#C4773B">1×1 conv</text>
+      <line class="edge-key" x1="280" y1="339" x2="446" y2="339" marker-end="url(#rw3k)"/>
+      <text class="t-edge" x="363" y="330" text-anchor="middle" fill="#C4773B">1×1 conv</text>
+
+      <!-- fpn levels -->
+      <rect class="box-key" x="450" y="90" width="150" height="54" rx="8"/>
+      <text class="t-title" x="525" y="120" text-anchor="middle">P5</text>
+      <rect class="box-key" x="450" y="164" width="150" height="54" rx="8"/>
+      <text class="t-title" x="525" y="194" text-anchor="middle">P4</text>
+      <rect class="box-key" x="450" y="238" width="150" height="54" rx="8"/>
+      <text class="t-title" x="525" y="268" text-anchor="middle">P3</text>
+      <rect class="box-key" x="450" y="312" width="150" height="54" rx="8"/>
+      <text class="t-title" x="525" y="342" text-anchor="middle">P2</text>
+
+      <line class="edge" x1="525" y1="144" x2="525" y2="160" marker-end="url(#rw3)"/>
+      <line class="edge" x1="525" y1="218" x2="525" y2="234" marker-end="url(#rw3)"/>
+      <line class="edge" x1="525" y1="292" x2="525" y2="308" marker-end="url(#rw3)"/>
+      <text class="t-edge" x="538" y="156" text-anchor="start">upsample + add</text>
+
+      <!-- to head -->
+      <path class="edge" d="M600,117 H640 V198"/>
+      <path class="edge" d="M600,191 H640"/>
+      <path class="edge" d="M600,265 H640 V198"/>
+      <path class="edge" d="M600,339 H640 V198"/>
+      <line class="edge" x1="640" y1="198" x2="676" y2="198" marker-end="url(#rw3)"/>
+
+      <rect class="box" x="680" y="164" width="176" height="68" rx="8"/>
+      <text class="t-title" x="768" y="192" text-anchor="middle">Segmentation head</text>
+      <text class="t-sub" x="768" y="210" text-anchor="middle">merge + 3×3 conv</text>
+      <text class="t-sub" x="768" y="226" text-anchor="middle">upsample to input</text>
+
+      <line class="edge" x1="768" y1="232" x2="768" y2="284" marker-end="url(#rw3)"/>
+
+      <rect class="box-hw" x="680" y="288" width="176" height="62" rx="8"/>
+      <text class="t-title" x="768" y="314" text-anchor="middle">4-class mask</text>
+      <text class="t-sub" x="768" y="332" text-anchor="middle">live · bleached · degraded · other</text>
+    </svg></div>
+    <figcaption>
+      <strong>The amber edges are the expensive ones.</strong> Each lateral connection means an
+      earlier feature map has to still be resident when a later stage wants it. Four of them, at
+      four resolutions, is what turns a streaming problem into a buffering problem — and on a
+      device with a fixed BRAM budget, buffering is the constraint that decides how big the
+      backbone is allowed to be.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============ NEXT ============ -->
+<section class="proj-section fade-in">
+  <div class="section-label">What's next</div>
+  <h2 class="proj-h2">From "it runs" to "it holds up"</h2>
+  <p>
+    The deployment path is proven end to end, which frees up the harder questions. Next on my side:
+  </p>
+  <ul>
+    <li><strong>Quantify the quantization gap</strong> — run the same 200 frames through the full-precision model and measure the mIoU delta directly, rather than inferring it.</li>
+    <li><strong>Measure power on the board</strong> — the FPGA-versus-GPU argument is currently made from datasheets; it needs to be made from a meter.</li>
+    <li><strong>Close the data gap on bleaching</strong> — bleached pixels are about 1.2% of Coralscapes and the annotation is deliberately conservative. Hand-labelling close-range frames to a written class standard is the unglamorous work that most determines whether the rare class is learnable.</li>
+    <li><strong>Push past INT8</strong> — the stock DPU is INT8-only, so adaptive INT4/INT8 precision would require a custom HLS or FINN dataflow design. Worth it only if the power saving is real.</li>
+  </ul>
+  <div class="callout">
+    <div class="callout-label">The honest risk</div>
+    <p>
+      A model trained on real dive imagery has to recognise staged bleaching in a rendered scene,
+      and a model validated in that scene has to transfer back to real reefs. Both directions of
+      that reality gap have to be measured separately before the digital twin can be trusted as
+      verification rather than as a demo.
+    </p>
+  </div>
+</section>
+
+</div>
+
+<div class="proj-next">
+  <a href="bms.html" class="btn-secondary">Next project — Battery Management System →</a>
+  <a href="../index.html#projects" class="btn-secondary">All projects</a>
+</div>
+
+<footer>
+  <span>© 2026 Chloe Gao</span>
+  <span>chloegao.dev</span>
+</footer>
+
+<script>
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40);
+});
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
+},{threshold:0.05});
+document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
